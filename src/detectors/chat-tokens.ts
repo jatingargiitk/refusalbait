@@ -39,36 +39,36 @@ export const detectChatTokens: Detector = (text: string, ctx: FileContext): Find
   const idx = new LineIndex(text);
   const expected = LLM_PATH.test(ctx.path);
   for (const r of RULES) {
-    const seen = new Map<string, Finding>();
+    // One finding per rule per file: first location, distinct tokens, total count.
+    let first: { at: number; token: string } | undefined;
+    const tokens = new Set<string>();
+    let count = 0;
     for (let m = r.re.exec(text); m; m = r.re.exec(text)) {
-      const at = r.rule === "anthropic-turn" ? m.index + 2 : m.index;
       const token = m[0].trim();
-      const key = token.toLowerCase();
-      const prev = seen.get(key);
-      if (prev) {
-        const n = Number(/\((\d+) times\)$/.exec(prev.message)?.[1] ?? 1) + 1;
-        prev.message = prev.message.replace(/ \(\d+ times\)$/, "") + ` (${n} times)`;
-        continue;
-      }
-      let severity: Severity;
-      if (r.phrase) severity = ctx.prose ? "medium" : "high";
-      else if (expected) severity = "info";
-      else severity = ctx.prose ? "low" : "medium";
-      const f: Finding = {
-        detector: "chat-token",
-        rule: r.rule,
-        severity,
-        ...idx.locate(at),
-        message: r.phrase
-          ? `jailbreak-style instruction "${printable(token, 60)}"`
-          : `${r.family} chat-template token ${printable(token, 40)} in ${ctx.prose ? "a document" : "source"}` +
-            (expected ? " (expected in LLM tooling)" : ""),
-        excerpt: printable(token, 80),
-      };
-      seen.set(key, f);
-      findings.push(f);
+      const at = m.index + m[0].indexOf(token);
+      first ??= { at, token };
+      tokens.add(r.phrase ? token.replace(/\s+/g, " ") : token);
+      count++;
     }
     r.re.lastIndex = 0;
+    if (!first) continue;
+    let severity: Severity;
+    if (r.phrase) severity = ctx.prose ? "medium" : "high";
+    else if (expected) severity = "info";
+    else severity = ctx.prose ? "info" : "medium";
+    const list = [...tokens].slice(0, 5).map((t) => printable(t, 60));
+    const times = count > 1 ? ` (${count} times)` : "";
+    findings.push({
+      detector: "chat-token",
+      rule: r.rule,
+      severity,
+      ...idx.locate(first.at),
+      message: r.phrase
+        ? `jailbreak-style instruction ${list.map((t) => `"${t}"`).join(", ")}${times}`
+        : `${r.family} chat-template token${tokens.size > 1 ? "s" : ""} ${list.join(" ")} in ${ctx.prose ? "a document" : "source"}${times}` +
+          (expected ? " (expected in LLM tooling)" : ""),
+      excerpt: printable(first.token, 80),
+    });
   }
   return findings;
 };

@@ -35,9 +35,9 @@ describe("detectChatTokens", () => {
     expect(f[0]!.message).toMatch(/\(3 times\)$/);
   });
 
-  it("treats tokens in LLM tooling as expected and in docs as low", () => {
+  it("treats tokens in LLM tooling and in docs as informational", () => {
     expect(detectChatTokens('"<|im_start|>"', { ...code, path: "lib/tokenizer.js" })[0]!.severity).toBe("info");
-    expect(detectChatTokens("Use `<|im_start|>`.", { ...code, path: "README.md", prose: true })[0]!.severity).toBe("low");
+    expect(detectChatTokens("Use `<|im_start|>`.", { ...code, path: "README.md", prose: true })[0]!.severity).toBe("info");
   });
 
   it("ignores ordinary HTML and words", () => {
