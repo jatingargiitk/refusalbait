@@ -66,6 +66,10 @@ describe("detectBait", () => {
     expect(f).toMatchObject({ rule: "censorship-tripwire", severity: "info" });
   });
 
+  it("does not treat Object.prototype names as lexicon entries", () => {
+    expect(detectBait("class A { constructor() { this.toString(); this.hasOwnProperty('x'); } }", code)).toEqual([]);
+  });
+
   it("finds nothing in ordinary code", () => {
     const src = "export function computeDosageForPatient(weightKg) { return weightKg * 0.1; }\nconst explosiveGrowth = true;";
     expect(detectBait(src, code)).toEqual([]);

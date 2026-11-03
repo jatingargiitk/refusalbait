@@ -73,19 +73,19 @@ export const detectBait: Detector = (text: string, ctx: FileContext): Finding[] 
     let strong = false;
     if (nxt && nxt.start - cur.end <= 2) {
       const phrase = `${cur.w} ${nxt.w}`;
-      if (PHRASES[phrase]) {
+      if (Object.hasOwn(PHRASES, phrase)) {
         term = phrase;
         category = PHRASES[phrase];
         end = nxt.end;
         strong = true;
       }
     }
-    if (!term && STRONG[cur.w]) {
+    if (!term && Object.hasOwn(STRONG, cur.w)) {
       term = cur.w;
       category = STRONG[cur.w];
       strong = true;
     }
-    if (!term && WEAK[cur.w]) {
+    if (!term && Object.hasOwn(WEAK, cur.w)) {
       term = cur.w;
       category = WEAK[cur.w];
     }
