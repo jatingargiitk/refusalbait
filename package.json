@@ -1,0 +1,53 @@
+{
+  "name": "refusalbait",
+  "version": "0.1.0",
+  "description": "Find code built to make AI reviewers refuse, skip, or get steered: hidden Unicode prompts, refusal-bait names, fake chat tokens, and notes to AI reviewers.",
+  "type": "module",
+  "bin": {
+    "refusalbait": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "lint": "eslint . && tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "security",
+    "llm",
+    "ai-review",
+    "prompt-injection",
+    "unicode",
+    "invisible-characters",
+    "trojan-source",
+    "scanner",
+    "cli",
+    "sarif"
+  ],
+  "author": "Jatin Garg",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jatingargiitk/refusalbait.git"
+  },
+  "homepage": "https://github.com/jatingargiitk/refusalbait#readme",
+  "bugs": {
+    "url": "https://github.com/jatingargiitk/refusalbait/issues"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "typescript": "~5.9",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^4.1.12"
+  }
+}
