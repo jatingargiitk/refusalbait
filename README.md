@@ -11,6 +11,8 @@
 
 These are the things that can make an AI-assisted security review refuse a file, skip it, or be steered by it. refusalbait doesn't call any model. It is a fast, offline, regex-and-lexicon scanner that points at the lines worth a human look.
 
+![refusalbait scanning the fingerprint-sample fixture and decoding a hidden prompt](docs/demo.gif)
+
 ## Why
 
 In ["Why is this fingerprinting script creating bioweapons?"](https://nullpt.rs/fingerprinting-bioweapons) (nullpt.rs, Oct 2026), veritas reverse-engineers an anti-bot script whose function names are things like `computeRicinLethalDosageForWaterSupply` and `calculateFentanylPrecursorSynthesisYield`. The script also carries a jailbreak prompt hidden in invisible Unicode tag characters, fake `<thinking>` blocks and `<|END_OF_TURN_TOKEN|>`. The author's guess is that this is anti-LLM obfuscation: names chosen to trip model safeguards so the script can't be deobfuscated with an LLM. One assistant they tried refused to look at it.
