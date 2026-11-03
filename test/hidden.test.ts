@@ -47,7 +47,8 @@ describe("detectHidden", () => {
   it("flags bidi overrides as high in code and medium in prose", () => {
     const text = 'if (role === "user\u202E \u2066// admin\u2069 \u2066") {}';
     const f = detectHidden(text, code);
-    expect(f.every((x) => x.rule === "bidi-control")).toBe(true);
+    expect(f).toHaveLength(1);
+    expect(f[0]!.message).toContain("U+202E, U+2066, U+2069");
     expect(f[0]!.severity).toBe("high");
     expect(detectHidden(text, prose)[0]!.severity).toBe("medium");
   });

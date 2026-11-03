@@ -64,6 +64,11 @@ function isFlagSequence(prev: string | undefined, tags: number[]): boolean {
   return tags.slice(0, -1).every((cp) => (cp >= 0xe0061 && cp <= 0xe007a) || (cp >= 0xe0030 && cp <= 0xe0039));
 }
 
+function bidiMessage(cps: number[]): string {
+  const list = [...new Set(cps)].sort((a, b) => a - b).map(hex).join(", ");
+  return `bidirectional control characters (${list}): the text displays in a different order than it is parsed (Trojan Source)`;
+}
+
 const LETTER_NON_ASCII = /[^\p{ASCII}]/u;
 
 export const detectHidden: Detector = (text: string, ctx: FileContext): Finding[] => {
@@ -79,6 +84,17 @@ export const detectHidden: Detector = (text: string, ctx: FileContext): Finding[
   const add = (offset: number, f: Omit<Finding, "detector" | "line" | "column">) => {
     findings.push({ detector: "hidden-unicode", ...idx.locate(offset), ...f });
   };
+  const bidiSeen = new Map<number, { finding: Finding; cps: Set<number> }>();
+  const mergeBidi = (offset: number, cps: number[]): boolean => {
+    const { line } = idx.locate(offset);
+    const prior = bidiSeen.get(line);
+    if (prior) {
+      cps.forEach((cp) => prior.cps.add(cp));
+      prior.finding.message = bidiMessage([...prior.cps]);
+      return true;
+    }
+    return false;
+  };
 
   for (let i = 0; i < chars.length; i++) {
     if (!isHidden(chars[i]!.cp)) continue;
@@ -87,7 +103,10 @@ export const detectHidden: Detector = (text: string, ctx: FileContext): Finding[
     const run = chars.slice(i, j);
     const prev = i > 0 ? String.fromCodePoint(chars[i - 1]!.cp) : undefined;
     const next = j < chars.length ? String.fromCodePoint(chars[j]!.cp) : undefined;
-    classifyRun(run, prev, next, ctx, add);
+    const before = findings.length;
+    classifyRun(run, prev, next, ctx, add, mergeBidi);
+    const bidiFinding = findings.slice(before).find((f) => f.rule === "bidi-control");
+    if (bidiFinding) bidiSeen.set(bidiFinding.line, { finding: bidiFinding, cps: new Set(run.map((c) => c.cp).filter(isBidi)) });
     i = j - 1;
   }
   return findings;
@@ -99,6 +118,7 @@ function classifyRun(
   next: string | undefined,
   ctx: FileContext,
   add: (offset: number, f: Omit<Finding, "detector" | "line" | "column">) => void,
+  merge: (offset: number, cps: number[]) => boolean,
 ): void {
   const start = run[0]!.offset;
   const cps = run.map((c) => c.cp);
@@ -130,11 +150,12 @@ function classifyRun(
 
   const bidi = cps.filter(isBidi);
   if (bidi.length > 0) {
+    // Trojan Source lines usually carry several controls; report each line once.
+    if (merge(firstOf(isBidi), bidi)) return;
     add(firstOf(isBidi), {
       rule: "bidi-control",
       severity: ctx.prose ? "medium" : "high",
-      message: `bidirectional control character ${[...new Set(bidi)].map(hex).join(", ")}: text may display in a different order than it is parsed (Trojan Source)`,
-      excerpt: printable(String.fromCodePoint(...cps)),
+      message: bidiMessage(bidi),
     });
   }
 
