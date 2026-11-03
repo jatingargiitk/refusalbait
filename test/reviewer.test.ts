@@ -23,9 +23,9 @@ describe("detectReviewerInstructions", () => {
     }
   });
 
-  it("rates a bare directive with no addressee as low", () => {
+  it("rates a bare directive with no addressee as info", () => {
     const [f] = detectReviewerInstructions("// do not review: generated", code);
-    expect(f).toMatchObject({ rule: "review-suppression", severity: "low" });
+    expect(f).toMatchObject({ rule: "review-suppression", severity: "info" });
   });
 
   it("treats agent instruction files as informational", () => {

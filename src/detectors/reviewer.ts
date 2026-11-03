@@ -75,7 +75,8 @@ export const detectReviewerInstructions: Detector = (text: string, ctx: FileCont
       findings.push({
         detector: "reviewer-instruction",
         rule: "review-suppression",
-        severity: ctx.prose ? "info" : "low",
+        // Linters and parsers say "don't report" all the time; without an addressee it is only a hint.
+        severity: "info",
         line,
         column,
         message: `review-suppressing instruction: "${printable(m[0], 60)}"`,
