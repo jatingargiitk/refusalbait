@@ -9,6 +9,8 @@ export interface WalkOptions {
   nodeModules: boolean;
   /** Extra directory or file names to skip. */
   ignore: string[];
+  /** Only scan these paths (relative to the root, forward slashes), e.g. files changed in a diff. */
+  only?: string[];
 }
 
 export interface WalkedFile {
@@ -113,6 +115,19 @@ export async function* walk(root: string, opts: WalkOptions, stats: WalkStats): 
 
   if (rootStat.isFile() && ARCHIVE_EXT.has(path.extname(absRoot).slice(1).toLowerCase())) {
     yield* walkArchive(absRoot, opts, stats);
+    return;
+  }
+  if (opts.only) {
+    for (const rel of [...opts.only].sort()) {
+      const parts = rel.split("/");
+      if (parts.some((p) => skip.has(p))) continue;
+      if (parts.includes("node_modules") && !allowNodeModules) continue;
+      try {
+        yield* visit(path.join(absRoot, ...parts), rel);
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
+      }
+    }
     return;
   }
   if (rootStat.isFile()) yield* visit(absRoot, path.basename(absRoot));

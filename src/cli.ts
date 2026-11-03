@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync, realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { changedFiles } from "./git.ts";
 import { COLOR, PLAIN, formatJson, formatSarif, formatTerminal } from "./format.ts";
 import { scan, worstSeverity, type ScanReport } from "./scan.ts";
 import { SEVERITY_ORDER, type Severity } from "./types.ts";
@@ -20,6 +21,8 @@ Options:
   --fail-on <severity>   exit 1 if any finding is at or above this level:
                          high (default), medium, low, info, or none
   --min-severity <sev>   hide findings below this level in the terminal (default: low)
+  --diff <ref>           only scan files changed since a git ref (e.g. origin/main),
+                         plus uncommitted and untracked files; whole files are scanned
   --node-modules         also scan node_modules folders (automatic when the target is inside one)
   --ignore <name>        skip files or folders with this name (repeatable)
   --max-size <bytes>     skip files larger than this (default: 2000000)
@@ -39,6 +42,7 @@ export interface CliOptions {
   ignore: string[];
   maxBytes: number;
   color: boolean;
+  diff?: string;
 }
 
 class UsageError extends Error {}
@@ -89,6 +93,9 @@ export function parseArgs(argv: string[], env: NodeJS.ProcessEnv = {}, isTTY = f
         o.minSeverity = v as Severity;
         break;
       }
+      case "--diff":
+        o.diff = value(i++, a);
+        break;
       case "--node-modules":
         o.nodeModules = true;
         break;
@@ -144,7 +151,8 @@ export async function main(argv: string[], out: (s: string) => void, err: (s: st
   const reports: ScanReport[] = [];
   for (const p of opts.paths) {
     try {
-      reports.push(await scan(p, { maxBytes: opts.maxBytes, nodeModules: opts.nodeModules, ignore: opts.ignore }));
+      const only = opts.diff === undefined ? undefined : changedFiles(p, opts.diff);
+      reports.push(await scan(p, { maxBytes: opts.maxBytes, nodeModules: opts.nodeModules, ignore: opts.ignore, only }));
     } catch (e) {
       err(`refusalbait: cannot scan ${p}: ${(e as Error).message}\n`);
       return 2;
