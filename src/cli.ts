@@ -12,7 +12,7 @@ Find code built to make AI reviewers refuse, skip, or get steered.
 
 Usage: refusalbait [path ...] [options]
 
-  path                   folder or file to scan (default: .)
+  path                   folder, file, or .vsix/.zip archive to scan (default: .)
 
 Options:
   --json                 print the full report as JSON

@@ -1,5 +1,6 @@
-import { lstat, open, readdir } from "node:fs/promises";
+import { lstat, open, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { readZip } from "./zip.ts";
 
 export interface WalkOptions {
   /** Skip files larger than this many bytes. */
@@ -36,6 +37,33 @@ function looksBinary(buf: Buffer): boolean {
   const n = Math.min(buf.length, 8192);
   for (let i = 0; i < n; i++) if (buf[i] === 0) return true;
   return false;
+}
+
+/** Archives that are expanded in memory when passed directly as the scan target. */
+export const ARCHIVE_EXT = new Set(["vsix", "zip"]);
+
+async function* walkArchive(abs: string, opts: WalkOptions, stats: WalkStats): AsyncGenerator<WalkedFile> {
+  const skip = new Set([...ALWAYS_SKIP, ...opts.ignore]);
+  for (const entry of readZip(await readFile(abs))) {
+    const parts = entry.name.split("/");
+    if (parts.some((p) => skip.has(p))) continue;
+    if (parts.includes("node_modules") && !opts.nodeModules && !abs.endsWith(".vsix")) continue;
+    if (BINARY_EXT.has(path.extname(entry.name).slice(1).toLowerCase())) {
+      stats.skippedBinary++;
+      continue;
+    }
+    if (entry.size > opts.maxBytes) {
+      stats.skippedLarge++;
+      continue;
+    }
+    const buf = entry.read(opts.maxBytes);
+    if (looksBinary(buf)) {
+      stats.skippedBinary++;
+      continue;
+    }
+    stats.scanned++;
+    yield { abs: `${abs}!/${entry.name}`, rel: entry.name, text: buf.toString("utf8") };
+  }
 }
 
 export async function* walk(root: string, opts: WalkOptions, stats: WalkStats): AsyncGenerator<WalkedFile> {
@@ -83,6 +111,10 @@ export async function* walk(root: string, opts: WalkOptions, stats: WalkStats): 
     yield { abs, rel: rel || path.basename(abs), text: buf.toString("utf8") };
   }
 
+  if (rootStat.isFile() && ARCHIVE_EXT.has(path.extname(absRoot).slice(1).toLowerCase())) {
+    yield* walkArchive(absRoot, opts, stats);
+    return;
+  }
   if (rootStat.isFile()) yield* visit(absRoot, path.basename(absRoot));
   else yield* visit(absRoot, "");
 }
