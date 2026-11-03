@@ -40,6 +40,7 @@ describe("detectHidden", () => {
 
   it("finds variation-selector smuggling but not a single emoji selector", () => {
     expect(detectHidden("const heart = '❤\uFE0F';", code)).toEqual([]);
+    expect(detectHidden("const tools = '🛠\uFE0F\uFE0F';", code)).toEqual([]);
     const [f] = detectHidden(`const s = "a${vsEncode("run me")}";`, code);
     expect(f).toMatchObject({ rule: "variation-selector-smuggling", severity: "high", decoded: "run me" });
   });

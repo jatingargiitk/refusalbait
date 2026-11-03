@@ -137,9 +137,11 @@ function classifyRun(
 
   const vs = cps.filter(isVS);
   // One selector after a character is normal emoji/CJK presentation. Several in a row carry data.
-  if (vs.length >= 2) {
-    const decoded = decodeVariationSelectors(vs);
-    const readable = printableRatio(decoded) > 0.8 && decoded.trim().length >= 2;
+  // A doubled VS16 after an emoji is a common typo, so short unreadable runs are ignored.
+  const decodedVs = vs.length >= 2 ? decodeVariationSelectors(vs) : "";
+  const readable = printableRatio(decodedVs) > 0.8 && decodedVs.trim().length >= 2;
+  if (readable || vs.length >= 4) {
+    const decoded = decodedVs;
     add(firstOf(isVS), {
       rule: "variation-selector-smuggling",
       severity: readable ? "high" : "medium",
