@@ -30,7 +30,9 @@ export interface ScanReport {
   elapsedMs: number;
 }
 
-const PROSE_EXT = /\.(?:md|markdown|mdx|txt|rst|adoc|asciidoc|org)$/i;
+// Docs and data files (JSON dumps, CSV) are mostly human text: words like "suicide" or
+// "cocaine" there are content, not identifiers, so they are treated as prose.
+const PROSE_EXT = /\.(?:md|markdown|mdx|txt|rst|adoc|asciidoc|org|json|jsonl|ndjson|csv|tsv)$/i;
 
 export function isMinified(path: string, text: string): boolean {
   if (/\.min\.(?:js|mjs|cjs|css)$/i.test(path)) return true;

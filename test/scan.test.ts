@@ -90,4 +90,10 @@ describe("scoring helpers", () => {
     expect(r.findings).toHaveLength(20);
     expect(r.truncated).toBe(10);
   });
+
+  it("treats JSON and CSV data as prose, so words in data are not identifiers", () => {
+    const data = JSON.stringify([{ title: "Cocaine use and suicide rates", text: "a long comment" }]);
+    expect(scanText("dump.json", data).findings.filter((x) => x.detector === "refusal-bait")).toEqual([]);
+    expect(scanText("dump.js", `const sarinSynthesis = 1;`).findings).not.toEqual([]);
+  });
 });
