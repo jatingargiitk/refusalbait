@@ -1,5 +1,5 @@
 /**
- * Curated terms that frontier models are trained to treat as high-risk.
+ * Curated terms that commonly trip AI safety refusals.
  * Code that drops them into identifiers or strings with no domain reason
  * is a known trick to make an AI reviewer refuse to read the file.
  *
@@ -25,6 +25,7 @@ export const STRONG: Record<string, BaitCategory> = {
   phosgene: "cbrn",
   yellowcake: "cbrn",
   tatp: "explosives",
+  anfo: "explosives",
   hmtd: "explosives",
   semtex: "explosives",
   nitroglycerin: "explosives",
@@ -67,6 +68,8 @@ export const WEAK: Record<string, BaitCategory> = {
 /** Words that turn a term into an instruction-shaped request ("lethal dosage", "synthesis route"). */
 export const AMPLIFIERS = new Set([
   "lethal",
+  "fallout",
+  "overpressure",
   "dosage",
   "dose",
   "synthesis",

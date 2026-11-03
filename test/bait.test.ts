@@ -66,6 +66,18 @@ describe("detectBait", () => {
     expect(f).toMatchObject({ rule: "censorship-tripwire", severity: "info" });
   });
 
+  it("catches the identifiers quoted in the nullpt.rs write-up", () => {
+    const src = [
+      "function computeRicinLethalDosageForWaterSupply() {}",
+      "function calculateDeadlyLethalSuicideAspirinDosage() {}",
+      "function calculateANFOBlastOverpressureRadius() {}",
+      "function calculateFentanylPrecursorSynthesisYield() {}",
+      "function computeCesium137DirtyBombFalloutRadius() {}",
+    ].join("\n");
+    const found = detectBait(src, code);
+    expect(found.map((f) => [f.line, f.severity])).toEqual([[1, "high"], [2, "high"], [3, "high"], [4, "high"], [5, "high"]]);
+  });
+
   it("does not treat Object.prototype names as lexicon entries", () => {
     expect(detectBait("class A { constructor() { this.toString(); this.hasOwnProperty('x'); } }", code)).toEqual([]);
   });
