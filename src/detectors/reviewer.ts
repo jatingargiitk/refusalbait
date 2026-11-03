@@ -65,7 +65,8 @@ export const detectReviewerInstructions: Detector = (text: string, ctx: FileCont
       findings.push({
         detector: "reviewer-instruction",
         rule: "ai-reviewer-directive",
-        severity: "high",
+        // Docs and data often discuss AI tools in passing, so prose is one level lower.
+        severity: ctx.prose ? "medium" : "high",
         line,
         column,
         message: `instruction aimed at AI reviewers: "${printable(m[0], 60)}"`,
