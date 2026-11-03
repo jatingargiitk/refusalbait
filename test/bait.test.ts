@@ -42,6 +42,7 @@ describe("detectBait", () => {
   it("ignores weak terms unless an amplifier is close", () => {
     expect(detectBait("const uraniumMass = 238;", code)).toEqual([]);
     expect(detectBait("const uraniumEnrichmentLevel = 0.9;", code)[0]!.severity).toBe("high");
+    expect(detectBait("var dosage=1,explosiveGrowth=!0;", { ...code, minified: true })).toEqual([]);
   });
 
   it("does not match substrings inside ordinary words", () => {

@@ -98,8 +98,8 @@ export const detectBait: Detector = (text: string, ctx: FileContext): Finding[] 
     if (inToken) {
       severity = "high";
       reason = `combined with "${inToken.w}" in one identifier`;
-    } else if (nearby) {
-      severity = strong ? "high" : "medium";
+    } else if (nearby && strong) {
+      severity = "high";
       reason = `next to "${nearby.w}"`;
     } else if (strong) {
       severity = "medium";
